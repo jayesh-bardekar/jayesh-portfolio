@@ -1,0 +1,347 @@
+@import "tailwindcss";
+
+/* ========================================
+
+1. Global Theme
+   ======================================== */
+:root {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #0f172a;
+  background: #f8fafc;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Theme Colors */
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-heading: #0f172a;
+  --color-text: #475569;
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #7c3aed;
+  --color-border: #e2e8f0;
+  --color-border-hover: #bfdbfe;
+
+  /* Layout */
+  --container-width: 1200px;
+  --page-padding: clamp(16px, 4vw, 48px);
+
+  /* More balanced section spacing */
+  --section-spacing: clamp(48px, 5.5vw, 76px);
+
+  /* Shared effects */
+  --shadow-card: 0 4px 20px rgb(15 23 42 / 4%);
+  --shadow-card-hover: 0 14px 34px rgb(37 99 235 / 9%);
+  --shadow-button: 0 6px 18px rgb(37 99 235 / 18%);
+
+  /* Consistent corners */
+  --radius-card: 24px;
+  --radius-button: 999px;
+}
+
+/* ========================================
+2. Reset & Base Styles
+======================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 90px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: clip;
+
+  color: var(--color-heading);
+  background: var(--color-background);
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button {
+  cursor: pointer;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+button,
+input,
+textarea,
+select {
+  font-size: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+  color: var(--color-heading);
+  letter-spacing: -0.035em;
+}
+
+p {
+  margin-top: 0;
+  color: var(--color-text);
+}
+
+::selection {
+  color: #ffffff;
+  background: #2563eb;
+}
+
+/* ========================================
+3. Accessible Focus States
+======================================== */
+:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 65%);
+  outline-offset: 4px;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================
+4. Reusable Layout Utilities
+======================================== */
+.container-custom {
+  width: min(calc(100% - (2 * var(--page-padding))), var(--container-width));
+  margin-inline: auto;
+}
+
+.section-padding {
+  padding-block: var(--section-spacing);
+}
+
+.section-heading {
+  margin-bottom: 16px;
+  color: var(--color-heading);
+  font-size: clamp(30px, 4vw, 46px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.section-description {
+  max-width: 680px;
+  color: var(--color-text);
+  font-size: clamp(15px, 1.3vw, 17px);
+  line-height: 1.8;
+}
+
+/* ========================================
+5. Gradient Text
+======================================== */
+.gradient-text {
+  color: var(--color-primary);
+  background-image: linear-gradient(
+    110deg,
+    #2563eb 0%,
+    #4f46e5 55%,
+    #7c3aed 100%
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+6. Premium Cards
+======================================== */
+.glass-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: rgb(255 255 255 / 96%);
+  box-shadow: var(--shadow-card);
+
+  transition:
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-card:hover {
+    border-color: var(--color-border-hover);
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-3px);
+  }
+}
+
+/* ========================================
+7. Primary Gradient Button
+======================================== */
+.btn-gradient {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: 12px 24px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-button);
+
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+
+  background-image: linear-gradient(110deg, #2563eb, #4f46e5);
+  box-shadow: var(--shadow-button);
+
+  transition:
+    box-shadow 200ms ease,
+    transform 200ms ease,
+    background-image 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .btn-gradient:hover {
+    background-image: linear-gradient(110deg, #1d4ed8, #4338ca);
+    box-shadow: 0 10px 26px rgb(37 99 235 / 25%);
+    transform: translateY(-2px);
+  }
+}
+
+.btn-gradient:active {
+  transform: translateY(0);
+}
+
+/* ========================================
+8. Subtle Background Decoration
+======================================== */
+.bg-glow {
+  pointer-events: none;
+  position: absolute;
+  z-index: 0;
+  border-radius: 999px;
+  background: rgb(219 234 254 / 55%);
+  filter: blur(70px);
+}
+
+/* ========================================
+9. Scrollbar Styling
+======================================== */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f8fafc;
+}
+
+html::-webkit-scrollbar {
+  width: 9px;
+}
+
+html::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+html::-webkit-scrollbar-thumb {
+  border: 2px solid #f8fafc;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* ========================================
+10. Responsive Adjustments
+======================================== */
+@media (max-width: 640px) {
+  :root {
+    --page-padding: 18px;
+    --section-spacing: 48px;
+    --radius-card: 20px;
+  }
+
+  .section-heading {
+    margin-bottom: 12px;
+    font-size: clamp(28px, 7vw, 36px);
+  }
+
+  .section-description {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .btn-gradient {
+    min-height: 46px;
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+}
+
+/* ========================================
+11. Reduced Motion Accessibility
+======================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
