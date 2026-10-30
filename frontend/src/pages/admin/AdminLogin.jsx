@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-
-const API_URL = "http://localhost:5000";
+import API from "../../utils/api";
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -29,18 +27,13 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        `${API_URL}/api/admin/login`,
-        formData
-      );
-
+      const response = await API.post("/api/admin/login", formData);
       const { token } = response.data;
 
       if (!token) {
         throw new Error("Login token was not received.");
       }
-
-      // Temporary local development storage.
+      
       // Production mein HttpOnly Secure cookies prefer karein.
       sessionStorage.setItem("adminToken", token);
 

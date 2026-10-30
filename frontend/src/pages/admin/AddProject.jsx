@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../utils/api";
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -10,8 +10,6 @@ import {
   LoaderCircle,
   ExternalLink,
 } from "lucide-react";
-
-const API_URL = "http://localhost:5000";
 
 const emptyForm = {
   title: "",
@@ -207,8 +205,8 @@ export default function AddProject() {
     const data = new FormData();
     data.append("image", coverFile);
 
-    const response = await axios.post(
-      `${API_URL}/api/upload`,
+    const response = await API.post(
+      `/api/upload`,
       data,
       {
         headers: {
@@ -229,8 +227,8 @@ export default function AddProject() {
       data.append("images", file);
     });
 
-    const response = await axios.post(
-      `${API_URL}/api/upload/multiple`,
+    const response = await API.post(
+      `/api/upload/multiple`,
       data,
       {
         headers: {
@@ -280,8 +278,8 @@ export default function AddProject() {
 
       setStatus("Saving project...");
 
-      await axios.post(
-        `${API_URL}/api/projects`,
+      await API.post(
+        `/api/projects`,
         {
           title: form.title.trim(),
           description: form.description.trim(),

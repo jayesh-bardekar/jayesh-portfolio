@@ -10,14 +10,10 @@ import {
   AlertCircle,
   LoaderCircle,
   ArrowUpRight,
-  BriefcaseBusiness,
 } from "lucide-react";
 
 import { FaGithub, FaLinkedin } from "react-icons/fa";
-
-const API_URL = (
-  import.meta.env.VITE_API_URL || "http://localhost:5000"
-).replace(/\/$/, "");
+import API from "../../utils/api";
 
 const initialForm = {
   name: "",
@@ -30,8 +26,7 @@ const contactDetails = [
   {
     icon: Mail,
     label: "Email",
-    value:
-      "[jayeshbardekar2710@gmail.com](mailto:jayeshbardekar2710@gmail.com)",
+    value: "jayeshbardekar2710@gmail.com",
     href: "mailto:jayeshbardekar2710@gmail.com",
   },
   {
@@ -59,12 +54,15 @@ const socialLinks = [
 
 export default function Contact() {
   const [form, setForm] = useState(initialForm);
+
   const [status, setStatus] = useState({
     type: "",
     message: "",
   });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Handle Input Changes
   const handleChange = (event) => {
     const { name, value } = event.target;
 
@@ -74,41 +72,44 @@ export default function Contact() {
     }));
 
     if (status.message) {
-      setStatus({ type: "", message: "" });
+      setStatus({
+        type: "",
+        message: "",
+      });
     }
   };
 
+  // Submit Contact Form
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (isSubmitting) return;
 
-    setStatus({ type: "", message: "" });
+    setStatus({
+      type: "",
+      message: "",
+    });
+
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/contact`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          subject: form.subject.trim(),
-          message: form.message.trim(),
-        }),
+      const response = await API.post("/api/contact", {
+        name: form.name.trim(),
+        email: form.email.trim(),
+        subject: form.subject.trim(),
+        message: form.message.trim(),
       });
 
-      const data = await response.json();
+      const data = response.data;
 
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         if (data.saved) {
           setStatus({
             type: "warning",
             message:
               "Your message was saved, but the email notification failed. Please avoid resubmitting it.",
           });
+
           return;
         }
 
@@ -119,17 +120,29 @@ export default function Contact() {
 
       setStatus({
         type: "success",
-        message: data.message || "Your message has been sent successfully!",
+        message:
+          data.message || "Your message has been sent successfully!",
       });
 
       setForm(initialForm);
     } catch (error) {
-      setStatus({
-        type: "error",
-        message:
-          error.message ||
-          "Unable to connect to the server. Please try again later.",
-      });
+      const data = error.response?.data;
+
+      if (data?.saved) {
+        setStatus({
+          type: "warning",
+          message:
+            "Your message was saved, but the email notification failed. Please avoid resubmitting it.",
+        });
+      } else {
+        setStatus({
+          type: "error",
+          message:
+            data?.message ||
+            error.message ||
+            "Unable to connect to the server. Please try again later.",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -143,8 +156,9 @@ export default function Contact() {
       id="contact"
       className="relative min-h-auto overflow-hidden bg-[#F8FAFC] px-4 py-12 text-slate-900 sm:px-6 sm:py-14 lg:px-8"
     >
-      {" "}
-      <div className="pointer-events-none absolute -left-32 top-24 size-64 rounded-full bg-blue-200/30 blur-3xl" />{" "}
+      {/* Background Decorations */}
+      <div className="pointer-events-none absolute -left-32 top-24 size-64 rounded-full bg-blue-200/30 blur-3xl" />
+
       <div className="pointer-events-none absolute -right-32 bottom-20 size-64 rounded-full bg-violet-200/30 blur-3xl" />
 
       <div className="relative mx-auto max-w-6xl">
@@ -184,6 +198,7 @@ export default function Contact() {
               collaborative projects, and connecting with fellow developers.
             </p>
 
+            {/* Contact Details */}
             <div className="mt-6 space-y-3">
               {contactDetails.map((item) => {
                 const Icon = item.icon;
@@ -195,7 +210,10 @@ export default function Contact() {
                     </div>
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-500">{item.label}</p>
+                      <p className="text-xs text-slate-500">
+                        {item.label}
+                      </p>
+
                       <p className="mt-1 break-all text-sm font-medium text-slate-800">
                         {item.value}
                       </p>
@@ -226,6 +244,7 @@ export default function Contact() {
 
             <div className="my-6 h-px bg-slate-100" />
 
+            {/* Social Links */}
             <h3 className="text-sm font-semibold text-slate-800">
               Find me online
             </h3>
@@ -250,6 +269,7 @@ export default function Contact() {
                       <p className="text-sm font-semibold text-slate-800">
                         {social.name}
                       </p>
+
                       <p className="mt-1 truncate text-xs text-slate-500">
                         {social.username}
                       </p>
@@ -284,6 +304,7 @@ export default function Contact() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Name and Email */}
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label
@@ -344,6 +365,7 @@ export default function Contact() {
                 </div>
               </div>
 
+              {/* Subject */}
               <div>
                 <label
                   htmlFor="subject"
@@ -365,6 +387,7 @@ export default function Contact() {
                 />
               </div>
 
+              {/* Message */}
               <div>
                 <label
                   htmlFor="message"
@@ -397,6 +420,7 @@ export default function Contact() {
                 </p>
               </div>
 
+              {/* Status Message */}
               {status.message && (
                 <div
                   role="status"
@@ -419,6 +443,7 @@ export default function Contact() {
                 </div>
               )}
 
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isSubmitting}

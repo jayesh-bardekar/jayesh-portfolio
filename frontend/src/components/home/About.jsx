@@ -1,3 +1,4 @@
+import API from "../../utils/api";
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
@@ -11,8 +12,6 @@ import {
   Target,
   LoaderCircle,
 } from "lucide-react";
-
-const API_URL = "http://localhost:5000/api/documents/resume";
 
 const highlights = [
   {
@@ -44,28 +43,43 @@ export default function About() {
 
   // Fetch latest resume from backend
   useEffect(() => {
+    let active = true;
+
     const fetchResume = async () => {
       try {
         setResumeLoading(true);
         setResumeError("");
 
-        const response = await fetch(API_URL);
-        const data = await response.json();
+        const response = await API.get("/api/documents/resume");
+        const data = response.data;
 
-        if (!response.ok || !data.success || !data.resume) {
+        if (!data.success || !data.resume) {
           throw new Error(data.message || "Resume not available.");
         }
 
-        setResume(data.resume);
+        if (active) {
+          setResume(data.resume);
+        }
       } catch (error) {
         console.error("Resume loading failed:", error);
-        setResumeError("Resume is currently unavailable.");
+
+        if (active) {
+          setResumeError(
+            error.response?.data?.message || "Resume is currently unavailable.",
+          );
+        }
       } finally {
-        setResumeLoading(false);
+        if (active) {
+          setResumeLoading(false);
+        }
       }
     };
 
     fetchResume();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const entrance = (delay = 0) => ({

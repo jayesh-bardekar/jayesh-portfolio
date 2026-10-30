@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import API from "../../utils/api";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
@@ -14,8 +14,6 @@ import {
   ArrowUpRight,
   RefreshCw,
 } from "lucide-react";
-
-const API_URL = "http://localhost:5000";
 
 function getYouTubeEmbedUrl(value) {
   try {
@@ -283,7 +281,7 @@ export default function Projects() {
         setLoading(true);
         setError("");
 
-        const response = await axios.get(`${API_URL}/api/projects`);
+        const response = await API.get("/api/projects");
         const data = response.data;
 
         const list = Array.isArray(data)

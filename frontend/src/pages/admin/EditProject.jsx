@@ -1,20 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import API from "../../utils/api";
 
-const API_URL = "http://localhost:5000";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_GALLERY_IMAGES = 10;
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white outline-none placeholder:text-slate-500 focus:border-violet-400";
 
-const allowedTypes = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
+const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 function getYouTubeEmbedUrl(value) {
   try {
@@ -86,7 +80,7 @@ export default function EditProject() {
 
     const fetchProject = async () => {
       try {
-        const response = await axios.get(`${API_URL}/api/projects/${id}`);
+        const response = await API.get(`/api/projects/${id}`);
 
         const project =
           response.data.project || response.data.data || response.data;
@@ -113,14 +107,12 @@ export default function EditProject() {
               item &&
               ["image", "video"].includes(item.type) &&
               typeof item.url === "string" &&
-              item.url
-          )
+              item.url,
+          ),
         );
       } catch (err) {
         if (active) {
-          setError(
-            err.response?.data?.message || "Unable to load project."
-          );
+          setError(err.response?.data?.message || "Unable to load project.");
         }
       } finally {
         if (active) setLoading(false);
@@ -213,14 +205,12 @@ export default function EditProject() {
     }
 
     const validFiles = files.filter(
-      (file) =>
-        allowedTypes.includes(file.type) &&
-        file.size <= MAX_FILE_SIZE
+      (file) => allowedTypes.includes(file.type) && file.size <= MAX_FILE_SIZE,
     );
 
     if (validFiles.length !== files.length) {
       setError(
-        "Some files were skipped. Use JPG, PNG, WEBP or GIF images up to 5 MB."
+        "Some files were skipped. Use JPG, PNG, WEBP or GIF images up to 5 MB.",
       );
     }
 
@@ -242,13 +232,13 @@ export default function EditProject() {
 
   const removeExistingMedia = (index) => {
     setExistingMedia((previous) =>
-      previous.filter((_, itemIndex) => itemIndex !== index)
+      previous.filter((_, itemIndex) => itemIndex !== index),
     );
   };
 
   const removeNewGalleryImage = (index) => {
     setGalleryFiles((previous) =>
-      previous.filter((_, fileIndex) => fileIndex !== index)
+      previous.filter((_, fileIndex) => fileIndex !== index),
     );
 
     setGalleryPreviews((previous) => {
@@ -276,7 +266,7 @@ export default function EditProject() {
 
     const alreadyExists =
       existingMedia.some(
-        (item) => item.type === "video" && item.url === embedUrl
+        (item) => item.type === "video" && item.url === embedUrl,
       ) || videos.some((item) => item.url === embedUrl);
 
     if (alreadyExists) {
@@ -298,7 +288,7 @@ export default function EditProject() {
 
   const removeNewVideo = (index) => {
     setVideos((previous) =>
-      previous.filter((_, videoIndex) => videoIndex !== index)
+      previous.filter((_, videoIndex) => videoIndex !== index),
     );
   };
 
@@ -315,15 +305,11 @@ export default function EditProject() {
     const data = new FormData();
     data.append("image", selectedCover);
 
-    const response = await axios.post(
-      `${API_URL}/api/upload`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await API.post("/api/upload", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     const image = response.data.image;
 
@@ -345,15 +331,11 @@ export default function EditProject() {
       data.append("images", file);
     });
 
-    const response = await axios.post(
-      `${API_URL}/api/upload/multiple`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await API.post("/api/upload/multiple", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
     if (!Array.isArray(response.data.images)) {
       throw new Error("Gallery upload returned an invalid response.");
@@ -398,11 +380,7 @@ export default function EditProject() {
 
       const uploadedGallery = await uploadGallery(token);
 
-      const updatedMedia = [
-        ...existingMedia,
-        ...uploadedGallery,
-        ...videos,
-      ];
+      const updatedMedia = [...existingMedia, ...uploadedGallery, ...videos];
 
       const payload = {
         title: form.title.trim(),
@@ -420,15 +398,11 @@ export default function EditProject() {
 
       setStatus("Saving project changes...");
 
-      await axios.put(
-        `${API_URL}/api/projects/${id}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      await API.put(`/api/projects/${id}`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       navigate("/admin/dashboard", {
         state: {
@@ -445,7 +419,7 @@ export default function EditProject() {
       setError(
         err.response?.data?.message ||
           err.message ||
-          "Unable to update project."
+          "Unable to update project.",
       );
     } finally {
       setSaving(false);
@@ -498,9 +472,7 @@ export default function EditProject() {
               PORTFOLIO ADMIN
             </p>
 
-            <h1 className="mt-2 text-3xl font-bold">
-              Edit Project
-            </h1>
+            <h1 className="mt-2 text-3xl font-bold">Edit Project</h1>
 
             <p className="mt-2 text-sm text-slate-400">
               Update project details, gallery images and demo videos.
@@ -526,9 +498,7 @@ export default function EditProject() {
             {/* PROJECT DETAILS */}
 
             <section className="space-y-5">
-              <h2 className="text-lg font-semibold">
-                Project Information
-              </h2>
+              <h2 className="text-lg font-semibold">Project Information</h2>
 
               <div>
                 <label htmlFor="title" className="mb-2 block text-sm">
@@ -612,9 +582,7 @@ export default function EditProject() {
             {/* COVER IMAGE */}
 
             <section className="space-y-4 border-t border-white/10 pt-7">
-              <h2 className="text-lg font-semibold">
-                Cover Image
-              </h2>
+              <h2 className="text-lg font-semibold">Cover Image</h2>
 
               <div className="rounded-2xl border border-dashed border-white/20 bg-slate-900/60 p-4 sm:p-5">
                 {coverPreview ? (
