@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import {
   FileText,
@@ -6,12 +7,12 @@ import {
   GraduationCap,
   Code2,
   MapPin,
-  CheckCircle2,
   Layers3,
   Target,
+  LoaderCircle,
 } from "lucide-react";
 
-const resumePath = "/resume/Jayesh-Bardekar-Resume.pdf";
+const API_URL = "http://localhost:5000/api/documents/resume";
 
 const highlights = [
   {
@@ -37,6 +38,36 @@ const highlights = [
 export default function About() {
   const shouldReduceMotion = useReducedMotion();
 
+  const [resume, setResume] = useState(null);
+  const [resumeLoading, setResumeLoading] = useState(true);
+  const [resumeError, setResumeError] = useState("");
+
+  // Fetch latest resume from backend
+  useEffect(() => {
+    const fetchResume = async () => {
+      try {
+        setResumeLoading(true);
+        setResumeError("");
+
+        const response = await fetch(API_URL);
+        const data = await response.json();
+
+        if (!response.ok || !data.success || !data.resume) {
+          throw new Error(data.message || "Resume not available.");
+        }
+
+        setResume(data.resume);
+      } catch (error) {
+        console.error("Resume loading failed:", error);
+        setResumeError("Resume is currently unavailable.");
+      } finally {
+        setResumeLoading(false);
+      }
+    };
+
+    fetchResume();
+  }, []);
+
   const entrance = (delay = 0) => ({
     initial: shouldReduceMotion ? false : { opacity: 0, y: 14 },
     whileInView: {
@@ -59,18 +90,16 @@ export default function About() {
       id="about"
       className="relative isolate scroll-mt-24 overflow-hidden bg-linear-to-br from-white via-slate-50 to-blue-50/50 px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6"
     >
-      {/* Background decoration */}
+      {/* Background decoration */}{" "}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
+        {" "}
         <div className="absolute -left-24 top-12 size-56 rounded-full bg-blue-100/50 blur-3xl sm:size-72" />
-
         <div className="absolute -right-20 bottom-8 size-64 rounded-full bg-violet-100/45 blur-3xl sm:size-80" />
-
         <div className="absolute inset-0 bg-[radial-gradient(#94a3b8_0.65px,transparent_0.65px)] bg-size-[28px_28px] opacity-15" />
       </div>
-
       <div className="mx-auto w-full max-w-6xl">
         {/* Section heading */}
         <motion.div
@@ -234,36 +263,49 @@ export default function About() {
             </div>
           </div>
 
-          {/* Resume actions */}
+          {/* Dynamic Resume actions */}
           <div className="mt-4 flex flex-col gap-2.5 border-t border-slate-100 pt-3 sm:mt-5 sm:flex-row sm:flex-wrap sm:pt-4">
-            <a
-              href={resumePath}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-md shadow-blue-200/60 transition-all duration-300 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-            >
-              <FileText size={17} aria-hidden="true" />
-              View Resume
-              <ArrowUpRight
-                size={15}
-                className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                aria-hidden="true"
-              />
-            </a>
+            {resumeLoading ? (
+              <div className="inline-flex min-h-10 items-center justify-center gap-2 text-sm font-semibold text-slate-500">
+                <LoaderCircle size={17} className="animate-spin" />
+                Loading Resume...
+              </div>
+            ) : resume ? (
+              <>
+                <a
+                  href={resume.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-md shadow-blue-200/60 transition-all duration-300 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                >
+                  <FileText size={17} aria-hidden="true" />
+                  View Resume
+                  <ArrowUpRight
+                    size={15}
+                    className="transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    aria-hidden="true"
+                  />
+                </a>
 
-            <a
-              href={resumePath}
-              download="Jayesh-Bardekar-Resume.pdf"
-              className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
-            >
-              <Download size={17} aria-hidden="true" />
-              Download Resume
-              <ArrowUpRight
-                size={14}
-                className="text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue-600"
-                aria-hidden="true"
-              />
-            </a>
+                <a
+                  href={resume.fileUrl}
+                  download={resume.fileName}
+                  className="group inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
+                >
+                  <Download size={17} aria-hidden="true" />
+                  Download Resume
+                  <ArrowUpRight
+                    size={14}
+                    className="text-slate-400 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-blue-600"
+                    aria-hidden="true"
+                  />
+                </a>
+              </>
+            ) : (
+              <p className="text-sm font-medium text-slate-500">
+                {resumeError || "Resume is currently unavailable."}
+              </p>
+            )}
           </div>
         </motion.section>
       </div>

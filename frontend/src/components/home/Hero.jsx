@@ -1,13 +1,20 @@
+import { useRef } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { useGSAP } from "@gsap/react";
+
 import {
   MapPin,
   ArrowUpRight,
   Code2,
   BriefcaseBusiness,
-  CheckCircle2,
-  Sparkles,
 } from "lucide-react";
 
+// Register GSAP plugins
+gsap.registerPlugin(ScrollTrigger, useGSAP);
+
+// Profile information
 const profile = {
   firstName: "Jayesh",
   lastName: "Bardekar",
@@ -18,6 +25,7 @@ const profile = {
     "I build modern web applications using Java, Spring Boot, SQL, React.js, Node.js, Express.js, and MongoDB. I enjoy solving practical problems and creating clean, responsive, and user-friendly digital experiences.",
 };
 
+// Technologies
 const technologies = [
   {
     name: "Java",
@@ -26,7 +34,8 @@ const technologies = [
   },
   {
     name: "Spring Boot",
-    color: "border-green-200 bg-green-50 text-green-700 hover:border-green-300",
+    color:
+      "border-green-200 bg-green-50 text-green-700 hover:border-green-300",
   },
   {
     name: "SQL",
@@ -35,18 +44,22 @@ const technologies = [
   },
   {
     name: "React.js",
-    color: "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300",
+    color:
+      "border-sky-200 bg-sky-50 text-sky-700 hover:border-sky-300",
   },
   {
     name: "Express.js",
-    color: "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300",
+    color:
+      "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300",
   },
   {
     name: "Node.js",
-    color: "border-lime-200 bg-lime-50 text-lime-700 hover:border-lime-300",
+    color:
+      "border-lime-200 bg-lime-50 text-lime-700 hover:border-lime-300",
   },
 ];
 
+// Framer Motion transition
 const transition = {
   duration: 0.65,
   ease: "easeOut",
@@ -55,6 +68,69 @@ const transition = {
 export default function Hero() {
   const shouldReduceMotion = useReducedMotion();
 
+  // GSAP references
+  const heroRef = useRef(null);
+  const backgroundRef = useRef(null);
+  const glowRef = useRef(null);
+  const ringRef = useRef(null);
+
+  // GSAP ScrollTrigger animations
+  useGSAP(
+    () => {
+      if (shouldReduceMotion) return;
+
+      const mm = gsap.matchMedia();
+
+      // Desktop and tablet animations
+      mm.add("(min-width: 768px)", () => {
+        // Background parallax
+        gsap.to(backgroundRef.current, {
+          y: 65,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
+
+        // Profile image glow movement
+        gsap.to(glowRef.current, {
+          y: 35,
+          scale: 1.08,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
+
+        // Decorative ring rotation
+        gsap.to(ringRef.current, {
+          rotation: 18,
+          ease: "none",
+          scrollTrigger: {
+            trigger: heroRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          },
+        });
+      });
+
+      return () => mm.revert();
+    },
+    {
+      scope: heroRef,
+      dependencies: [shouldReduceMotion],
+      revertOnUpdate: true,
+    }
+  );
+
+  // Framer Motion entrance animation
   const entrance = (direction = 0, delay = 0) => ({
     initial: shouldReduceMotion
       ? false
@@ -63,17 +139,20 @@ export default function Hero() {
           x: direction,
           y: direction === 0 ? 14 : 0,
         },
+
     animate: {
       opacity: 1,
       x: 0,
       y: 0,
     },
+
     transition: {
       ...transition,
       delay: shouldReduceMotion ? 0 : delay,
     },
   });
 
+  // Smooth section scrolling
   const scrollToSection = (event, sectionId) => {
     event.preventDefault();
 
@@ -81,7 +160,11 @@ export default function Hero() {
 
     if (!section) return;
 
-    window.history.replaceState(window.history.state, "", `/#${sectionId}`);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `/#${sectionId}`
+    );
 
     section.scrollIntoView({
       behavior: shouldReduceMotion ? "auto" : "smooth",
@@ -89,8 +172,12 @@ export default function Hero() {
     });
   };
 
+  // Floating badge animations
   const floatingAnimation = (distance, duration, delay = 0) => ({
-    animate: shouldReduceMotion ? { y: 0 } : { y: [0, distance, 0] },
+    animate: shouldReduceMotion
+      ? { y: 0 }
+      : { y: [0, distance, 0] },
+
     transition: {
       duration,
       delay: shouldReduceMotion ? 0 : delay,
@@ -101,11 +188,13 @@ export default function Hero() {
 
   return (
     <section
+      ref={heroRef}
       id="home"
       className="relative isolate flex scroll-mt-24 items-center overflow-hidden bg-linear-to-br from-white via-indigo-50/50 to-sky-50/70 px-4 pt-4 pb-8 sm:px-6 sm:pt-5 sm:pb-10 lg:min-h-[calc(100svh-72px)] lg:px-8 lg:pt-5 lg:pb-8 xl:px-12"
     >
       {/* Background decoration */}
       <div
+        ref={backgroundRef}
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
       >
@@ -120,7 +209,9 @@ export default function Hero() {
         <div className="absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-slate-200/80 to-transparent" />
       </div>
 
+      {/* Main container */}
       <div className="mx-auto grid w-full max-w-7xl items-center gap-10 md:grid-cols-[1.08fr_0.92fr] md:gap-8 lg:gap-12 xl:gap-16">
+
         {/* Left: Introduction */}
         <motion.div
           {...entrance(-22, 0)}
@@ -185,14 +276,22 @@ export default function Hero() {
             {technologies.map((technology, index) => (
               <motion.span
                 key={technology.name}
-                initial={shouldReduceMotion ? false : { opacity: 0, y: 10 }}
+                initial={
+                  shouldReduceMotion
+                    ? false
+                    : { opacity: 0, y: 10 }
+                }
                 animate={{ opacity: 1, y: 0 }}
                 transition={{
                   ...transition,
-                  delay: shouldReduceMotion ? 0 : 0.45 + index * 0.07,
+                  delay: shouldReduceMotion
+                    ? 0
+                    : 0.45 + index * 0.07,
                 }}
                 whileHover={
-                  shouldReduceMotion ? undefined : { y: -3, scale: 1.03 }
+                  shouldReduceMotion
+                    ? undefined
+                    : { y: -3, scale: 1.03 }
                 }
                 className={`inline-flex items-center rounded-full border px-3.5 py-2 text-xs font-semibold shadow-sm transition-colors duration-200 sm:text-sm ${technology.color}`}
               >
@@ -206,9 +305,12 @@ export default function Hero() {
             {...entrance(0, 0.55)}
             className="mt-8 flex flex-col items-stretch justify-center gap-3 min-[420px]:flex-row min-[420px]:items-center md:justify-start"
           >
+            {/* Projects button */}
             <a
               href="/#projects"
-              onClick={(event) => scrollToSection(event, "projects")}
+              onClick={(event) =>
+                scrollToSection(event, "projects")
+              }
               className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-200/70 transition-all duration-300 hover:-translate-y-1 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl hover:shadow-blue-200/80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
             >
               <Code2 size={18} aria-hidden="true" />
@@ -222,12 +324,18 @@ export default function Hero() {
               />
             </a>
 
+            {/* Contact button */}
             <a
               href="/#contact"
-              onClick={(event) => scrollToSection(event, "contact")}
+              onClick={(event) =>
+                scrollToSection(event, "contact")
+              }
               className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-6 py-3 text-sm font-bold text-slate-700 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-blue-600"
             >
-              <BriefcaseBusiness size={17} aria-hidden="true" />
+              <BriefcaseBusiness
+                size={17}
+                aria-hidden="true"
+              />
 
               <span>Contact Me</span>
 
@@ -245,9 +353,12 @@ export default function Hero() {
           {...entrance(22, 0.15)}
           className="order-1 flex min-w-0 justify-center md:order-2"
         >
-          <div className="relative w-full max-w-60 sm:max-w-72 md:max-w-64 lg:max-w-80 xl:max-w-88">
+          {/* Increased profile image container */}
+          <div className="relative w-full max-w-72 sm:max-w-80 md:max-w-76 lg:max-w-96 xl:max-w-105">
+
             {/* Animated background glow */}
             <motion.div
+              ref={glowRef}
               aria-hidden="true"
               animate={
                 shouldReduceMotion
@@ -262,24 +373,33 @@ export default function Hero() {
                 repeat: shouldReduceMotion ? 0 : Infinity,
                 ease: "easeInOut",
               }}
-              className="absolute -inset-5 rounded-full bg-linear-to-br from-violet-300/60 via-sky-200/60 to-blue-200/50 blur-2xl sm:-inset-7"
+              className="absolute -inset-6 rounded-full bg-linear-to-br from-violet-300/60 via-sky-200/60 to-blue-200/50 blur-2xl sm:-inset-8"
             />
 
             {/* Decorative outer ring */}
             <div
+              ref={ringRef}
               aria-hidden="true"
-              className="absolute -inset-2 rounded-full border border-blue-200/80 sm:-inset-3"
+              className="absolute -inset-3 rounded-full border border-blue-200/80 sm:-inset-4"
             />
 
+            {/* Decorative dashed ring */}
             <div
               aria-hidden="true"
-              className="absolute -inset-4 rounded-full border border-dashed border-indigo-200/70 sm:-inset-5"
+              className="absolute -inset-5 rounded-full border border-dashed border-indigo-200/70 sm:-inset-6"
             />
 
             {/* Profile image frame */}
             <motion.div
-              whileHover={shouldReduceMotion ? undefined : { scale: 1.015 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              whileHover={
+                shouldReduceMotion
+                  ? undefined
+                  : { scale: 1.015 }
+              }
+              transition={{
+                duration: 0.4,
+                ease: "easeOut",
+              }}
               className="relative aspect-square overflow-hidden rounded-full border-4 border-white bg-linear-to-br from-violet-100 via-white to-sky-100 p-1.5 shadow-2xl shadow-slate-300/60 sm:p-2"
             >
               <img
@@ -290,6 +410,7 @@ export default function Hero() {
                 decoding="async"
               />
 
+              {/* Inner image ring */}
               <div
                 aria-hidden="true"
                 className="pointer-events-none absolute inset-2 rounded-full border border-white/70"
@@ -324,9 +445,13 @@ export default function Hero() {
               </p>
             </motion.div>
 
-            {/* Floating MongoDB badge */}
+            {/* Floating SQL / MongoDB badge */}
             <motion.div
-              animate={shouldReduceMotion ? { y: 0 } : { y: [0, -4, 0] }}
+              animate={
+                shouldReduceMotion
+                  ? { y: 0 }
+                  : { y: [0, -4, 0] }
+              }
               transition={{
                 duration: 4,
                 delay: 0.6,
@@ -338,8 +463,9 @@ export default function Hero() {
               <p className="text-xs font-bold text-emerald-700 sm:text-sm">
                 SQL
               </p>
+
               <p className="mt-0.5 text-[10px] font-medium text-slate-500 sm:text-xs">
-                mongoDB
+                MongoDB
               </p>
             </motion.div>
           </div>

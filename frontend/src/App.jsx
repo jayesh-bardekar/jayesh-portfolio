@@ -26,6 +26,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AddProject from "./pages/admin/AddProject";
 import EditProject from "./pages/admin/EditProject";
+import Resume from "./pages/Resume";
 
 /* =========================================
 Shared Helpers
@@ -337,6 +338,7 @@ function AppContent() {
         <Routes location={location} key={location.pathname}>
           {/* Main Portfolio */}
           <Route path="/" element={<Home />} />
+          <Route path="/resume" element={<Resume />} />
 
           {/* Legacy Section URLs */}
           <Route path="/about" element={<SectionRedirect section="about" />} />

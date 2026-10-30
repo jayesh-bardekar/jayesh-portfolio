@@ -175,10 +175,6 @@ export default function Contact() {
             transition={{ duration: 0.45 }}
             className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
           >
-            <span className="text-xs font-semibold uppercase tracking-widest text-blue-700">
-              Contact Information
-            </span>
-
             <h2 className="mt-3 text-xl font-bold text-slate-900 sm:text-2xl">
               Let's start a conversation.
             </h2>

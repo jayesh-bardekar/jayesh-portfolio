@@ -26,7 +26,7 @@ const educationData = [
       "DBMS",
       "Web Development",
     ],
-    status: "Degree Program",
+    status: "Completed",
   },
   {
     level: "Higher Secondary",

@@ -7,13 +7,11 @@ import {
   ChevronRight,
   Image as ImageIcon,
   Video,
-  ExternalLink,
   Globe,
   LoaderCircle,
   FolderOpen,
   Code2,
   ArrowUpRight,
-  Layers3,
   RefreshCw,
 } from "lucide-react";
 
@@ -68,6 +66,7 @@ function ProjectGallery({ project, onClose }) {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const activeItem = galleryItems[activeIndex];
+  const galleryItemCount = galleryItems.length;
 
   const imagesCount = galleryItems.filter(
     (item) => item.type === "image",
@@ -79,13 +78,13 @@ function ProjectGallery({ project, onClose }) {
 
   const goToPrevious = useCallback(() => {
     setActiveIndex(
-      (index) => (index - 1 + galleryItems.length) % galleryItems.length,
+      (index) => (index - 1 + galleryItemCount) % galleryItemCount,
     );
-  }, [galleryItems.length]);
+  }, [galleryItemCount, setActiveIndex]);
 
   const goToNext = useCallback(() => {
-    setActiveIndex((index) => (index + 1) % galleryItems.length);
-  }, [galleryItems.length]);
+    setActiveIndex((index) => (index + 1) % galleryItemCount);
+  }, [galleryItemCount, setActiveIndex]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {

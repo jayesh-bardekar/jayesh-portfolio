@@ -12,6 +12,7 @@ const projectRoutes = require("./routes/projectRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const documentRoutes = require("./routes/documentRoutes");
 
 // Initialize Express
 const app = express();
@@ -84,6 +85,7 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/documents", documentRoutes);
 
 // ========================================
 // ROOT ROUTE
