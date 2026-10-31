@@ -19,19 +19,30 @@ const emptyForm = {
   githubUrl: "",
 };
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const MAX_GALLERY_IMAGES = 10;
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
+
 function getYouTubeEmbedUrl(value) {
   try {
     const url = new URL(value.trim());
+    const hostname = url.hostname.toLowerCase();
 
-    if (url.hostname === "youtu.be") {
+    if (hostname === "youtu.be") {
       const id = url.pathname.slice(1).split("/")[0];
       return id ? `https://www.youtube.com/embed/${id}` : "";
     }
 
     if (
-      url.hostname === "youtube.com" ||
-      url.hostname === "www.youtube.com" ||
-      url.hostname === "m.youtube.com"
+      hostname === "youtube.com" ||
+      hostname === "www.youtube.com" ||
+      hostname === "m.youtube.com"
     ) {
       if (url.pathname === "/watch") {
         const id = url.searchParams.get("v");
@@ -39,7 +50,8 @@ function getYouTubeEmbedUrl(value) {
       }
 
       if (url.pathname.startsWith("/embed/")) {
-        return url.href;
+        const id = url.pathname.split("/")[2];
+        return id ? `https://www.youtube.com/embed/${id}` : "";
       }
 
       if (url.pathname.startsWith("/shorts/")) {
@@ -54,10 +66,31 @@ function getYouTubeEmbedUrl(value) {
   return "";
 }
 
+function validateImage(file) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return "Only JPG, PNG, WEBP and GIF images are allowed.";
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return "Each image must be 5 MB or smaller.";
+  }
+
+  return "";
+}
+
+function getErrorMessage(error, fallback) {
+  if (!error.response) {
+    return "Unable to connect to the server. Please check your internet connection.";
+  }
+
+  return error.response.data?.message || fallback;
+}
+
 export default function AddProject() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState(emptyForm);
+
   const [coverFile, setCoverFile] = useState(null);
   const [coverPreview, setCoverPreview] = useState("");
 
@@ -94,19 +127,16 @@ export default function AddProject() {
     }));
   };
 
+  // COVER IMAGE
   const handleCoverChange = (event) => {
     const file = event.target.files?.[0];
 
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      setError("Please select a valid cover image.");
-      event.target.value = "";
-      return;
-    }
+    const validationError = validateImage(file);
 
-    if (file.size > 5 * 1024 * 1024) {
-      setError("Cover image must be 5 MB or smaller.");
+    if (validationError) {
+      setError(validationError);
       event.target.value = "";
       return;
     }
@@ -116,24 +146,45 @@ export default function AddProject() {
     setCoverPreview(URL.createObjectURL(file));
   };
 
+  const removeCoverImage = () => {
+    setCoverFile(null);
+    setCoverPreview("");
+
+    const input = document.getElementById("cover-image-input");
+
+    if (input) {
+      input.value = "";
+    }
+  };
+
+  // GALLERY IMAGES
   const handleGalleryChange = (event) => {
     const selectedFiles = Array.from(event.target.files || []);
+
     event.target.value = "";
 
     if (!selectedFiles.length) return;
 
-    const validFiles = selectedFiles.filter(
-      (file) =>
-        file.type.startsWith("image/") &&
-        file.size <= 5 * 1024 * 1024
-    );
+    const remainingSlots = MAX_GALLERY_IMAGES - galleryFiles.length;
 
-    const remainingSlots = 10 - galleryFiles.length;
+    const validFiles = [];
+    let invalidFileFound = false;
+
+    selectedFiles.forEach((file) => {
+      const validationError = validateImage(file);
+
+      if (validationError) {
+        invalidFileFound = true;
+      } else {
+        validFiles.push(file);
+      }
+    });
+
     const acceptedFiles = validFiles.slice(0, remainingSlots);
 
-    if (validFiles.length !== selectedFiles.length) {
-      setError("Some files were skipped. Choose images up to 5 MB each.");
-    } else if (selectedFiles.length > remainingSlots) {
+    if (invalidFileFound) {
+      setError("Some files were skipped. Use JPG, PNG, WEBP or GIF images up to 5 MB.");
+    } else if (validFiles.length > remainingSlots) {
       setError("A maximum of 10 gallery images is allowed.");
     } else {
       setError("");
@@ -151,7 +202,7 @@ export default function AddProject() {
 
   const removeGalleryImage = (index) => {
     setGalleryFiles((previous) =>
-      previous.filter((_, fileIndex) => fileIndex !== index)
+      previous.filter((_, fileIndex) => fileIndex !== index),
     );
 
     setGalleryPreviews((previous) => {
@@ -165,6 +216,7 @@ export default function AddProject() {
     });
   };
 
+  // YOUTUBE VIDEOS
   const addVideo = () => {
     const embedUrl = getYouTubeEmbedUrl(videoInput);
 
@@ -193,49 +245,64 @@ export default function AddProject() {
 
   const removeVideo = (index) => {
     setVideos((previous) =>
-      previous.filter((_, videoIndex) => videoIndex !== index)
+      previous.filter((_, videoIndex) => videoIndex !== index),
     );
   };
 
+  // COVER IMAGE UPLOAD
   const uploadCover = async (token) => {
     if (!coverFile) {
       return { url: "", publicId: "" };
     }
 
-    const data = new FormData();
-    data.append("image", coverFile);
+    const validationError = validateImage(coverFile);
 
-    const response = await API.post(
-      `/api/upload`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
+    const data = new FormData();
+
+    data.append("image", coverFile, coverFile.name);
+
+    const response = await API.post("/api/upload", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.data?.image?.url) {
+      throw new Error("Cover image upload failed. Please try again.");
+    }
 
     return response.data.image;
   };
 
+  // GALLERY IMAGE UPLOAD
   const uploadGallery = async (token) => {
     if (!galleryFiles.length) return [];
 
     const data = new FormData();
 
     galleryFiles.forEach((file) => {
-      data.append("images", file);
+      const validationError = validateImage(file);
+
+      if (validationError) {
+        throw new Error(validationError);
+      }
+
+      data.append("images", file, file.name);
     });
 
-    const response = await API.post(
-      `/api/upload/multiple`,
-      data,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await API.post("/api/upload/multiple", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!Array.isArray(response.data?.images)) {
+      throw new Error("Gallery image upload failed. Please try again.");
+    }
 
     return response.data.images.map((image, index) => ({
       type: "image",
@@ -245,6 +312,7 @@ export default function AddProject() {
     }));
   };
 
+  // CREATE PROJECT
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -279,25 +347,29 @@ export default function AddProject() {
       setStatus("Saving project...");
 
       await API.post(
-        `/api/projects`,
+        "/api/projects",
         {
           title: form.title.trim(),
           description: form.description.trim(),
+
           technologies: form.technologies
             .split(",")
             .map((item) => item.trim())
             .filter(Boolean),
+
           liveUrl: form.liveUrl.trim(),
           githubUrl: form.githubUrl.trim(),
+
           image: cover.url,
           imagePublicId: cover.publicId,
+
           media,
         },
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       navigate("/admin/dashboard", {
@@ -313,8 +385,10 @@ export default function AddProject() {
       }
 
       setError(
-        requestError.response?.data?.message ||
-          "Unable to create the project. Please try again."
+        getErrorMessage(
+          requestError,
+          "Unable to create the project. Please try again.",
+        ),
       );
     } finally {
       setLoading(false);
@@ -328,6 +402,8 @@ export default function AddProject() {
   return (
     <div className="min-h-screen bg-[#080812] px-4 py-8 text-white sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
+
+        {/* BACK BUTTON */}
         <Link
           to="/admin/dashboard"
           className="mb-7 inline-flex items-center gap-2 text-sm text-white/60 transition hover:text-white"
@@ -336,6 +412,7 @@ export default function AddProject() {
           Back to Dashboard
         </Link>
 
+        {/* HEADER */}
         <div className="mb-8">
           <p className="mb-2 text-sm font-medium text-violet-400">
             PORTFOLIO MANAGEMENT
@@ -354,8 +431,12 @@ export default function AddProject() {
           onSubmit={handleSubmit}
           className="space-y-7 rounded-3xl border border-white/10 bg-white/3 p-5 sm:p-8"
         >
+
+          {/* PROJECT INFORMATION */}
           <section className="space-y-5">
-            <h2 className="text-lg font-semibold">Project Information</h2>
+            <h2 className="text-lg font-semibold">
+              Project Information
+            </h2>
 
             <div>
               <label className="mb-2 block text-sm text-white/70">
@@ -439,14 +520,18 @@ export default function AddProject() {
             </div>
           </section>
 
+          {/* COVER IMAGE */}
           <section className="space-y-4 border-t border-white/10 pt-7">
-            <h2 className="text-lg font-semibold">Cover Image</h2>
+            <h2 className="text-lg font-semibold">
+              Cover Image
+            </h2>
 
             <p className="text-sm text-white/50">
               This image represents the project on the main projects page.
             </p>
 
             <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/2 p-5 text-center transition hover:border-violet-400/60">
+
               {coverPreview ? (
                 <img
                   src={coverPreview}
@@ -455,10 +540,15 @@ export default function AddProject() {
                 />
               ) : (
                 <>
-                  <ImagePlus size={30} className="mb-3 text-violet-400" />
+                  <ImagePlus
+                    size={30}
+                    className="mb-3 text-violet-400"
+                  />
+
                   <span className="text-sm font-medium">
                     Choose Cover Image
                   </span>
+
                   <span className="mt-1 text-xs text-white/40">
                     JPG, PNG, WEBP or GIF · Max 5 MB
                   </span>
@@ -466,6 +556,7 @@ export default function AddProject() {
               )}
 
               <input
+                id="cover-image-input"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 onChange={handleCoverChange}
@@ -476,20 +567,21 @@ export default function AddProject() {
             {coverFile && (
               <button
                 type="button"
-                onClick={() => {
-                  setCoverFile(null);
-                  setCoverPreview("");
-                }}
-                className="text-sm text-red-300 hover:text-red-200"
+                onClick={removeCoverImage}
+                className="text-sm text-red-300 transition hover:text-red-200"
               >
                 Remove cover image
               </button>
             )}
           </section>
 
+          {/* GALLERY */}
           <section className="space-y-4 border-t border-white/10 pt-7">
             <div>
-              <h2 className="text-lg font-semibold">Project Image Gallery</h2>
+              <h2 className="text-lg font-semibold">
+                Project Image Gallery
+              </h2>
+
               <p className="mt-1 text-sm text-white/50">
                 Add up to 10 additional images. Visitors can view them in the
                 project gallery.
@@ -497,8 +589,13 @@ export default function AddProject() {
             </div>
 
             <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 p-5 text-sm transition hover:border-violet-400/60 hover:bg-white/3">
-              <ImagePlus size={19} className="text-violet-400" />
+              <ImagePlus
+                size={19}
+                className="text-violet-400"
+              />
+
               Select Gallery Images
+
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
@@ -525,7 +622,7 @@ export default function AddProject() {
                       type="button"
                       onClick={() => removeGalleryImage(index)}
                       aria-label={`Remove gallery image ${index + 1}`}
-                      className="absolute right-2 top-2 rounded-full bg-black/80 p-1.5 text-white hover:bg-red-500"
+                      className="absolute right-2 top-2 rounded-full bg-black/80 p-1.5 text-white transition hover:bg-red-500"
                     >
                       <X size={15} />
                     </button>
@@ -535,13 +632,17 @@ export default function AddProject() {
             )}
 
             <p className="text-xs text-white/40">
-              {galleryFiles.length}/10 gallery images selected
+              {galleryFiles.length}/{MAX_GALLERY_IMAGES} gallery images selected
             </p>
           </section>
 
+          {/* YOUTUBE VIDEOS */}
           <section className="space-y-4 border-t border-white/10 pt-7">
             <div>
-              <h2 className="text-lg font-semibold">YouTube Demo Videos</h2>
+              <h2 className="text-lg font-semibold">
+                YouTube Demo Videos
+              </h2>
+
               <p className="mt-1 text-sm text-white/50">
                 Add YouTube links to demonstrate how your project works.
               </p>
@@ -572,15 +673,21 @@ export default function AddProject() {
                 className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/3 p-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <Video className="shrink-0 text-violet-400" size={20} />
+                  <Video
+                    className="shrink-0 text-violet-400"
+                    size={20}
+                  />
 
                   <div className="min-w-0">
-                    <p className="text-sm font-medium">{video.title}</p>
+                    <p className="text-sm font-medium">
+                      {video.title}
+                    </p>
+
                     <a
                       href={video.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex max-w-full items-center gap-1 truncate text-xs text-white/50 hover:text-violet-300"
+                      className="inline-flex max-w-full items-center gap-1 truncate text-xs text-white/50 transition hover:text-violet-300"
                     >
                       Preview on YouTube
                       <ExternalLink size={12} />
@@ -600,18 +707,28 @@ export default function AddProject() {
             ))}
           </section>
 
+          {/* ERROR MESSAGE */}
           {error && (
-            <div className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300">
+            <div
+              role="alert"
+              className="rounded-xl border border-red-400/20 bg-red-400/10 p-4 text-sm text-red-300"
+            >
               {error}
             </div>
           )}
 
+          {/* STATUS MESSAGE */}
           {status && (
-            <div className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-4 text-sm text-violet-200">
+            <div
+              role="status"
+              aria-live="polite"
+              className="rounded-xl border border-violet-400/20 bg-violet-400/10 p-4 text-sm text-violet-200"
+            >
               {status}
             </div>
           )}
 
+          {/* ACTION BUTTONS */}
           <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-6 sm:flex-row sm:justify-end">
             <Link
               to="/admin/dashboard"
@@ -626,7 +743,10 @@ export default function AddProject() {
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-violet-500 to-fuchsia-500 px-6 py-3 text-sm font-semibold transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {loading && (
-                <LoaderCircle size={17} className="animate-spin" />
+                <LoaderCircle
+                  size={17}
+                  className="animate-spin"
+                />
               )}
 
               {loading ? "Saving Project..." : "Create Project"}
